@@ -8,5 +8,5 @@
   height: 34px;
   padding: 0;
   text-align: center;
-  width: 34px;
+  min-width: 34px;
 }
