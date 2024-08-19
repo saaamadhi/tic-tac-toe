@@ -25,21 +25,10 @@
 
 .game__container {
   display: flex;
+  gap: 20px;
   align-items: flex-start;
-}
-
-.game-history {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 20px;
-}
-
-.game-history__container {
-  list-style-type: none;
-  margin: 0;
-}
-
-.game-history__step {
-  margin-bottom: 5px;
+  @media screen and (max-width: 420px) {
+    flex-direction: column;
+    align-items: center;
+  }
 }

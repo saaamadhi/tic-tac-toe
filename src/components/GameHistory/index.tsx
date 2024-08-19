@@ -9,15 +9,15 @@ export default memo(function GameHistory({
   history: HistoryType;
   onNavigateHistory: (key: number) => void;
 }) {
-  if (!history) {
+  const historyKeys = history && Object.keys(history);
+
+  if (!(historyKeys && historyKeys.length > 1)) {
     return null;
   }
 
-  const historyKeys = Object.keys(history);
-
   return (
     <div className='game-history'>
-      {historyKeys.length > 1 ? <p>Steps:</p> : null}
+      <p>Steps:</p>
       <ul className='game-history__container'>
         {historyKeys.map((key) => {
           const formattedKey = Number(key);
