@@ -1,7 +1,7 @@
-import { CellType } from '../../types';
-import './index.css';
-import Cell from '../Cell';
 import { memo } from 'react';
+import { CellType } from '../../types';
+import Cell from '../Cell';
+import './index.css';
 
 export default memo(function Board({
   grid,
