@@ -11,13 +11,6 @@ export const getBoardOptions = (min: number, max: number) => {
     .map((_, index) => index + min);
 };
 
-/*
-  new Map<number, Record<number, CellType>>([
-    [0, { 0: 'X', 1: null, 2: 'O' }], 
-    [1, { 0: 'X', 1: null, 2: 'O' }],
-    [2, { 0: 'X', 1: null, 2: 'O' }],
-  ]);*/
-
 export const generateGrid = <T extends CellType>({
   size,
   mapper,
