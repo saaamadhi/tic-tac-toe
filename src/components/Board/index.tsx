@@ -8,8 +8,8 @@ export default memo(function Board({
   onClick,
   disabled,
 }: {
-  grid?: CellType[][];
-  onClick: ({ rowId, cellId }: { rowId: any; cellId: any }) => void;
+  grid?: Map<number, Record<number, CellType>>;
+  onClick: ({ rowId, cellId }: { rowId: number; cellId: number }) => void;
   disabled: boolean;
 }) {
   if (!grid) {
@@ -20,17 +20,17 @@ export default memo(function Board({
     <div
       className='board'
       style={{
-        gridTemplateRows: `repeat(${grid.length}, 1fr)`,
-        gridTemplateColumns: `repeat(${grid[0].length}, 1fr)`,
+        gridTemplateRows: `repeat(${grid.size}, 1fr)`,
+        gridTemplateColumns: `repeat(${grid.size}, 1fr)`,
       }}
     >
-      {grid.map((row, rowIndex) =>
-        row.map((cell, cellIndex) => (
+      {Array.from(grid, ([rowKey, rowValue]) =>
+        Object.entries(rowValue).map(([cellKey, cellValue]) => (
           <Cell
-            key={`${cellIndex}-${rowIndex}`}
-            cell={cell}
-            onClick={() => onClick({ rowId: rowIndex, cellId: cellIndex })}
+            key={`${rowKey}-${cellKey}`}
+            value={cellValue}
             disabled={disabled}
+            onClick={() => onClick({ rowId: rowKey, cellId: Number(cellKey) })}
           />
         ))
       )}

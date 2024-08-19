@@ -1,123 +1,188 @@
 import { useState, ChangeEvent, useCallback, useMemo } from 'react';
 import './App.css';
 import Board from './components/Board';
-import { boardOptions, generateGrid } from './utils';
-import { CellType } from './types';
+import {
+  getBoardOptions,
+  generateGrid,
+  BOARD_SIZE,
+  generateGridCoords,
+} from './utils';
+import { GridType, HistoryType, PLAYER } from './types';
+import GameHistory from './components/GameHistory';
 
 function App() {
   const [squareAmount, setSquareAmount] = useState(() => {
     return localStorage.getItem('gridSize') || '';
   });
-  const [grid, setGrid] = useState<CellType[][] | undefined>(() => {
+  const [grid, setGrid] = useState<GridType | undefined>(() => {
     return squareAmount
       ? generateGrid({
-          rows: Number(squareAmount),
-          columns: Number(squareAmount),
+          size: Number(squareAmount),
           mapper: () => null,
         })
       : undefined;
   });
-  const [player, setPlayer] = useState<Exclude<CellType, null>>('X');
-  const [history, setHistory] = useState<
-    Array<CellType[][] | undefined> | undefined
-  >([grid]);
-  const [historyStep, setHistoryStep] = useState<number | undefined>();
+  const [nullPositions, setNullPositions] = useState<Set<string> | undefined>(
+    () => generateGridCoords(Number(squareAmount))
+  );
 
-  const calculateWinner = (grid: CellType[][] | undefined) => {
-    for (let i = 0; grid && i < grid.length; i++) {
-      if (grid[i].every((cell) => cell === grid[i][0])) {
-        return grid[i][0];
+  const [player, setPlayer] = useState<PLAYER>(PLAYER.X);
+  const [history, setHistory] = useState<HistoryType | undefined>(() => {
+    return grid ? { 0: [new Map(grid), nullPositions] } : undefined;
+  });
+  const [selectedHistoryStep, setSelectedHistoryStep] = useState<
+    number | undefined
+  >();
+
+  const calculateWinner = useCallback(() => {
+    const firstRow = grid?.get(0);
+    if (grid && firstRow) {
+      for (const [index, row] of grid) {
+        // Find winner in a row
+        if (
+          row[0] !== null &&
+          Object.values(row).every((cell) => cell === row[0])
+        ) {
+          return row[0];
+        }
+        //Find winner in a column
+        if (
+          firstRow[index] !== null &&
+          [...grid.values()].every((row) => row[index] === firstRow[index])
+        ) {
+          return firstRow[index];
+        }
       }
-      if (grid.every((row) => row[i] === grid[0][i])) {
-        return grid[0][i];
+
+      //Find winner in a main diagonal
+      if (
+        [...grid.values()].every((row, index) => row[index] === firstRow[0])
+      ) {
+        return firstRow[0];
+      }
+      //Find winner in an anti-diagonal
+      if (
+        [...grid.values()].every(
+          (row, index) =>
+            row[grid.size - (index + 1)] === firstRow[grid.size - 1]
+        )
+      ) {
+        return firstRow[grid.size - 1];
       }
     }
 
-    if (grid?.every((row, index) => row[index] === grid[0][0])) {
-      return grid[0][0];
-    }
-    if (
-      grid?.every(
-        (row, index) =>
-          row[grid.length - (index + 1)] === grid[0][grid.length - 1]
-      )
-    ) {
-      return grid[0][grid.length - 1];
-    }
-
-    if (grid && grid.every((row) => row.every((cell) => cell !== null))) {
+    // Find if it's a draw
+    if (grid && !nullPositions?.size) {
       return 'XO';
     }
 
     return undefined;
-  };
+  }, [grid, nullPositions]);
 
   const onResetGame = () => {
-    setPlayer('X');
-    if (squareAmount) {
-      const initGrid = generateGrid({
-        rows: Number(squareAmount),
-        columns: Number(squareAmount),
-        mapper: () => null,
-      });
-      setGrid(initGrid);
-      setHistory([initGrid]);
+    const formattedGridSize = Number(squareAmount);
+    const initNullPositions = generateGridCoords(formattedGridSize);
+    const initGrid = generateGrid({
+      size: formattedGridSize,
+      mapper: () => null,
+    });
+
+    if (player !== PLAYER.X) {
+      setPlayer(PLAYER.X);
     }
+
+    setGrid(initGrid);
+    setNullPositions(initNullPositions);
+    setHistory({ 0: [new Map(initGrid), new Set(initNullPositions)] });
+    setSelectedHistoryStep(undefined);
   };
 
   const onSelectBoardSize = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value;
-    setPlayer('X');
-    setSquareAmount(event.target.value);
-    setGrid(
-      generateGrid({
-        rows: Number(value),
-        columns: Number(value),
-        mapper: () => null,
-      })
-    );
+    const formattedValue = Number(value);
+    const initGrid = generateGrid({
+      size: formattedValue,
+      mapper: () => null,
+    });
+    const initNullPositions = generateGridCoords(formattedValue);
+    if (player !== PLAYER.X) {
+      setPlayer(PLAYER.X);
+    }
+    setSquareAmount(value);
+    setGrid(initGrid);
+    setNullPositions(initNullPositions);
+    setHistory({
+      0: [new Map(initGrid), new Set(initNullPositions)],
+    });
+    setSelectedHistoryStep(undefined);
     localStorage.setItem('gridSize', value);
   };
 
   const onClickCell = useCallback(
-    ({ rowId, cellId }: { rowId: any; cellId: any }) => {
-      let nextGrid: CellType[][] | undefined;
-      if (grid && grid[rowId][cellId] === null) {
-        setPlayer((currentPlayer) => (currentPlayer === 'X' ? 'O' : 'X'));
-        setGrid((currentValue) => {
-          nextGrid = currentValue?.map((row, rowIndex) =>
-            row.map((cell, cellIndex) => {
-              if (rowIndex === rowId && cellIndex === cellId) {
-                return player;
-              }
-              return cell;
-            })
-          );
+    ({ rowId, cellId }: { rowId: number; cellId: number }) => {
+      const row = grid?.get(rowId);
+      if (row && row[cellId] === null) {
+        nullPositions?.delete(`${rowId},${cellId}`);
 
-          return nextGrid;
-        });
-        setHistory(
-          (currentHistory: Array<CellType[][] | undefined> | undefined) => {
-            if (currentHistory?.length && historyStep) {
-              setHistoryStep(undefined);
-              return [...currentHistory.slice(0, historyStep), nextGrid];
-            }
-            return currentHistory?.length
-              ? [...currentHistory, nextGrid]
-              : [nextGrid];
-          }
+        setPlayer((currentPlayer) =>
+          currentPlayer === PLAYER.X ? PLAYER.O : PLAYER.X
         );
+        const newValue = {
+          [cellId]: player,
+        };
+
+        grid?.set(rowId, { ...row, ...newValue });
+
+        setHistory((currentHistory) => {
+          if (currentHistory) {
+            const historyKeys = Object.keys(currentHistory);
+            if (selectedHistoryStep) {
+              setSelectedHistoryStep(undefined);
+              const slicedObject = historyKeys
+                .slice(0, selectedHistoryStep + 1)
+                .reduce(
+                  (
+                    acc: Record<number, (GridType | Set<string> | undefined)[]>,
+                    key
+                  ) => {
+                    const index = Number(key);
+                    acc[index] = currentHistory[index];
+                    return acc;
+                  },
+                  {}
+                );
+              return {
+                ...slicedObject,
+                ...{
+                  [selectedHistoryStep + 1]: [
+                    new Map(grid),
+                    new Set(nullPositions),
+                  ],
+                },
+              };
+            }
+            const lastKeyIndex = historyKeys.length;
+            return {
+              ...currentHistory,
+              ...{ [lastKeyIndex]: [new Map(grid), new Set(nullPositions)] },
+            };
+          }
+        });
       }
     },
     [grid, player]
   );
 
-  const winner = useMemo(() => calculateWinner(grid), [grid]);
-
-  const onNavigateHistory = (step: number, value: CellType[][] | undefined) => {
-    setGrid(value);
-    setHistoryStep(step + 1);
-    setPlayer((step + 1) % 2 === 0 ? 'O' : 'X');
+  const onNavigateHistory = (key: number) => {
+    setSelectedHistoryStep((currentStep) => {
+      if (history && currentStep !== key) {
+        const historyItem = history[key];
+        setGrid(historyItem[0] as GridType);
+        setNullPositions(new Set(historyItem[1] as Set<string>));
+        setPlayer((key + 1) % 2 !== 0 ? PLAYER.X : PLAYER.O);
+      }
+      return key;
+    });
   };
 
   const getBoardHeader = () => {
@@ -126,6 +191,13 @@ function App() {
     }
     return <p>{winner?.length > 1 ? 'Draw!' : `Winner: ${winner}`}</p>;
   };
+
+  const boardSizeList = useMemo(
+    () => getBoardOptions(BOARD_SIZE.min, BOARD_SIZE.max),
+    []
+  );
+
+  const winner = calculateWinner();
 
   return (
     <div className='wrapper'>
@@ -143,9 +215,9 @@ function App() {
               <option value='' disabled>
                 --Please choose an option--
               </option>
-              {boardOptions.map((el) => (
+              {boardSizeList.map((el) => (
                 <option value={el} key={el}>
-                  {el}
+                  {`${el}x${el}`}
                 </option>
               ))}
             </select>
@@ -161,26 +233,7 @@ function App() {
 
           <Board grid={grid} onClick={onClickCell} disabled={Boolean(winner)} />
         </div>
-        <div className='game-history'>
-          {squareAmount && <p>Steps:</p>}
-          <ul>
-            {squareAmount &&
-              history?.map((el, index) => {
-                return (
-                  <li key={`history-step-${index}`}>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        onNavigateHistory(index, el);
-                      }}
-                    >
-                      {index ? `Go to move #${index}` : 'Go to game start'}
-                    </button>
-                  </li>
-                );
-              })}
-          </ul>
-        </div>
+        <GameHistory history={history} onNavigateHistory={onNavigateHistory} />
       </div>
     </div>
   );

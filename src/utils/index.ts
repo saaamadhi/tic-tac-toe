@@ -1,29 +1,48 @@
-// [
-// [1,2,3] -> (i + 1) * rowI
-// [4,5,6]
-// [7,8,9]
-// ]
-// const dummyArray = [...new Array(10).fill(0).keys()].map((item) => item + 1);
-// const board = new Array(3)
-//   .fill(0)
-//   .map((_, index) => dummyArray.slice(index * 3, (index + 1) * 3));
+import { GridType, CellType } from '../types';
 
-import { CellType } from '../types';
+export const BOARD_SIZE = {
+  min: 3,
+  max: 8,
+};
 
-export const boardOptions = Array(8)
-  .fill(null)
-  .map((_, index) => index + 3);
+export const getBoardOptions = (min: number, max: number) => {
+  return Array(max)
+    .fill(null)
+    .map((_, index) => index + min);
+};
 
-export const generateGrid = <T extends CellType | string | number | undefined>({
-  rows,
-  columns,
+/*
+  new Map<number, Record<number, CellType>>([
+    [0, { 0: 'X', 1: null, 2: 'O' }], 
+    [1, { 0: 'X', 1: null, 2: 'O' }],
+    [2, { 0: 'X', 1: null, 2: 'O' }],
+  ]);*/
+
+export const generateGrid = <T extends CellType>({
+  size,
   mapper,
 }: {
-  rows: number;
-  columns: number;
+  size: number;
   mapper: () => T;
 }) => {
-  return Array(rows)
-    .fill(null)
-    .map(() => Array(columns).fill(null).map(mapper));
+  const hashMap: GridType = new Map();
+
+  for (let i = 0; i < size; i++) {
+    const child: Record<number, CellType> = {};
+    for (let j = 0; j < size; j++) {
+      child[j] = mapper();
+    }
+    hashMap.set(i, child);
+  }
+  return hashMap;
+};
+
+export const generateGridCoords = (size: number) => {
+  const positions: Set<string> = new Set();
+  for (let i = 0; i < size; i++) {
+    for (let j = 0; j < size; j++) {
+      positions.add(`${i},${j}`);
+    }
+  }
+  return positions;
 };
