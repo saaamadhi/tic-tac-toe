@@ -1,5 +1,9 @@
 ## Tic-Tac-Toe Game
 
+[Click here to start!](https://tic-tac-toe-lac-iota-37.vercel.app/)
+
+---
+
 Game rules:
 
 - Choose the board size**_(from 3x3 up to 10x10)_**
