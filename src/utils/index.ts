@@ -1,5 +1,8 @@
 import { GridType, CellType } from '../types';
 
+const WHITE_COLOR_INT = 16777215;
+const BLACK_COLOR_HEX = '#000000';
+
 export const BOARD_SIZE = {
   min: 3,
   max: 8,
@@ -38,4 +41,10 @@ export const generateGridCoords = (size: number) => {
     }
   }
   return positions;
+};
+
+export const generateRandomColor = () => {
+  const randomColor = Math.floor(Math.random() * WHITE_COLOR_INT).toString(16);
+
+  return BLACK_COLOR_HEX.slice(0, -randomColor.length) + randomColor;
 };

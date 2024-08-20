@@ -1,5 +1,4 @@
 .board {
-  background-color: #000;
   display: grid;
   grid-gap: 2px;
 }

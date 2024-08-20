@@ -1,7 +1,8 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { CellType } from '../../types';
 import Cell from '../Cell';
 import './index.css';
+import { generateRandomColor } from '../../utils';
 
 export default memo(function Board({
   grid,
@@ -16,12 +17,16 @@ export default memo(function Board({
     return null;
   }
 
+  const boardColor = useMemo(() => generateRandomColor(), []);
+
   return (
     <div
       className='board'
       style={{
         gridTemplateRows: `repeat(${grid.size}, 1fr)`,
         gridTemplateColumns: `repeat(${grid.size}, 1fr)`,
+        border: `2px solid ${boardColor}`,
+        backgroundColor: boardColor,
       }}
     >
       {Array.from(grid, ([rowKey, rowValue]) =>
