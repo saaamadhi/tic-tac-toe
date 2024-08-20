@@ -7,6 +7,8 @@
 .game-history__container {
   list-style-type: none;
   margin: 0;
+  min-width: 200px;
+  text-align: center;
   @media screen and (max-width: 420px) {
     padding: 0;
   }

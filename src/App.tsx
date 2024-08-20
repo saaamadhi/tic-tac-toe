@@ -8,8 +8,9 @@ import Canvas from './components/Canvas';
 function App() {
   const {
     boardSize,
+    getCurrentMove,
     grid,
-    history,
+    historyKeys,
     onResetGame,
     onSelectBoardSize,
     onClickCell,
@@ -22,9 +23,9 @@ function App() {
     <>
       <Canvas />
       <div className='wrapper'>
-        <h3 className='title'>Tic-Tac-Toe Game</h3>
         <div className='game__container'>
           <div className='game-board'>
+            <h3 className='title'>Tic-Tac-Toe Game</h3>
             <div className='select__container'>
               <BoardSizeSelector
                 size={boardSize}
@@ -32,10 +33,27 @@ function App() {
               />
               {boardSize && (
                 <div className='board-header'>
-                  <p>{getBoardHeader()}</p>
-                  <button type='button' onClick={onResetGame}>
-                    Reset
-                  </button>
+                  <div className='board-header__container'>
+                    <p>
+                      {historyKeys && historyKeys.length > 1
+                        ? `Current move: ${getCurrentMove()}`
+                        : null}
+                    </p>
+                    <button
+                      type='button'
+                      onClick={onResetGame}
+                      className='board-header__reset-button'
+                    >
+                      Reset
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      minHeight: '40px',
+                    }}
+                  >
+                    <p>{getBoardHeader()}</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -47,7 +65,7 @@ function App() {
             />
           </div>
           <GameHistory
-            history={history}
+            historyKeys={historyKeys}
             onNavigateHistory={onNavigateHistory}
           />
         </div>

@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useState } from 'react';
+import { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { GridType, PLAYER, HistoryType } from '../types';
 import { generateGrid, generateGridCoords } from '../utils';
 
@@ -127,10 +127,10 @@ const useGame = () => {
 
         setHistory((currentHistory) => {
           if (currentHistory) {
-            const historyKeys = Object.keys(currentHistory);
+            const currentHistoryKeys = Object.keys(currentHistory);
             if (selectedHistoryStep) {
               setSelectedHistoryStep(undefined);
-              const slicedObject = historyKeys
+              const slicedObject = currentHistoryKeys
                 .slice(0, selectedHistoryStep + 1)
                 .reduce(
                   (
@@ -153,7 +153,7 @@ const useGame = () => {
                 },
               };
             }
-            const lastKeyIndex = historyKeys.length;
+            const lastKeyIndex = currentHistoryKeys.length;
             return {
               ...currentHistory,
               ...{ [lastKeyIndex]: [new Map(grid), new Set(nullPositions)] },
@@ -169,7 +169,7 @@ const useGame = () => {
     setSelectedHistoryStep((currentStep) => {
       if (history && currentStep !== key) {
         const historyItem = history[key];
-        setGrid(historyItem[0] as GridType);
+        setGrid(new Map(historyItem[0] as GridType));
         setNullPositions(new Set(historyItem[1] as Set<string>));
         setPlayer((key + 1) % 2 !== 0 ? PLAYER.X : PLAYER.O);
       }
@@ -185,11 +185,21 @@ const useGame = () => {
   };
 
   const winner = calculateWinner();
+  const historyKeys = history && Object.keys(history);
+  const getCurrentMove = () => {
+    if (historyKeys) {
+      return selectedHistoryStep
+        ? selectedHistoryStep
+        : historyKeys?.length - 1;
+    }
+    return null;
+  };
 
   return {
     boardSize,
     grid,
-    history,
+    getCurrentMove,
+    historyKeys,
     onResetGame,
     onSelectBoardSize,
     onClickCell,

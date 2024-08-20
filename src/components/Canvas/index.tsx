@@ -92,12 +92,51 @@ export default memo(function Canvas() {
     controls.enableDamping = true;
     controls.enableZoom = false;
 
+    const handleResize = () => {
+      // Update sizes
+      sizes.width = window.innerWidth;
+      sizes.height = window.innerHeight;
+
+      // Update camera
+      camera.aspect = sizes.width / sizes.height;
+      camera.updateProjectionMatrix();
+
+      // Update renderer
+      renderer.setSize(sizes.width, sizes.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    /**
+     * Cursor
+     */
+
+    const cursor = { x: 0, y: 0 };
+    const handleMouseMove = (event: MouseEvent) => {
+      cursor.x = event.clientX / sizes.width - 0.5;
+      cursor.y = event.clientY / sizes.height - 0.5;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
     /**
      * Animate
      */
+    const clock = new THREE.Clock();
+    let previousTime = 0;
     let requestId: number | null = null;
 
     const tick = () => {
+      const elapsedTime = clock.getElapsedTime();
+      const deltaTime = elapsedTime - previousTime;
+      previousTime = elapsedTime;
+      const parallaxX = cursor.x * 0.5;
+      const parallaxY = -cursor.y * 0.5;
+      cameraGroup.position.x +=
+        (parallaxX - cameraGroup.position.x) * 5 * deltaTime;
+      cameraGroup.position.y +=
+        (parallaxY - cameraGroup.position.y) * 5 * deltaTime;
+
       // Update controls
       controls.update();
 
@@ -114,6 +153,8 @@ export default memo(function Canvas() {
       if (requestId) {
         window.cancelAnimationFrame(requestId);
       }
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
       scene?.clear();
       renderer?.dispose();
       controls?.dispose();
