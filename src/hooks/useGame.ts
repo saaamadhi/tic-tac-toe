@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useMemo, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import { GridType, PLAYER, HistoryType } from '../types';
 import { generateGrid, generateGridCoords } from '../utils';
 
