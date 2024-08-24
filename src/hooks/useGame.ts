@@ -27,6 +27,7 @@ const useGame = () => {
   >();
 
   const calculateWinner = useCallback(() => {
+    let coords: string[] = [];
     const firstRow = grid?.get(0);
     if (grid && firstRow) {
       for (const [index, row] of grid) {
@@ -35,40 +36,56 @@ const useGame = () => {
           row[0] !== null &&
           Object.values(row).every((cell) => cell === row[0])
         ) {
-          return row[0];
+          coords = Object.values(row).map(
+            (_, cellIndex) => `${index},${cellIndex}`
+          );
+
+          return { winner: row[0], coords };
         }
         //Find winner in a column
         if (
           firstRow[index] !== null &&
           [...grid.values()].every((row) => row[index] === firstRow[index])
         ) {
-          return firstRow[index];
+          coords = [...grid.values()].map(
+            (_, rowIndex) => `${rowIndex},${index}`
+          );
+
+          return { winner: firstRow[index], coords };
         }
       }
 
       //Find winner in a main diagonal
       if (
+        firstRow[0] !== null &&
         [...grid.values()].every((row, index) => row[index] === firstRow[0])
       ) {
-        return firstRow[0];
+        coords = [...grid.values()].map(
+          (_, rowIndex) => `${rowIndex},${rowIndex}`
+        );
+        return { winner: firstRow[0], coords };
       }
       //Find winner in an anti-diagonal
       if (
         [...grid.values()].every(
           (row, index) =>
+            firstRow[grid.size - 1] !== null &&
             row[grid.size - (index + 1)] === firstRow[grid.size - 1]
         )
       ) {
-        return firstRow[grid.size - 1];
+        coords = [...grid.values()].map(
+          (_, rowIndex) => `${rowIndex},${grid.size - (rowIndex + 1)}`
+        );
+        return { winner: firstRow[grid.size - 1], coords };
       }
     }
 
     // Find if it's a draw
     if (grid && !nullPositions?.size) {
-      return 'XO';
+      return { winner: 'XO' };
     }
 
-    return undefined;
+    return { winner: undefined };
   }, [grid, nullPositions]);
 
   const onResetGame = () => {
@@ -178,13 +195,15 @@ const useGame = () => {
   };
 
   const getBoardHeader = () => {
-    if (!winner) {
+    if (!winnerDetails.winner) {
       return `Next up: ${player}`;
     }
-    return winner?.length > 1 ? 'Draw!' : `Winner: ${winner}`;
+    return winnerDetails.winner.length > 1
+      ? 'Draw!'
+      : `Winner: ${winnerDetails.winner}`;
   };
 
-  const winner = calculateWinner();
+  const winnerDetails = calculateWinner();
   const historyKeys = history && Object.keys(history);
   const getCurrentMove = () => {
     if (historyKeys) {
@@ -205,7 +224,7 @@ const useGame = () => {
     onClickCell,
     onNavigateHistory,
     getBoardHeader,
-    winner,
+    winnerDetails,
   };
 };
 

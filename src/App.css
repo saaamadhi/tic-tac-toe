@@ -26,6 +26,7 @@
 
 .board-header {
   width: 100%;
+  min-width: 250px;
 }
 
 .board-header__container {
@@ -34,7 +35,8 @@
   align-items: center;
 }
 
-.board-header__reset-button {
+.board-header__reset-button,
+.board-header__current-move {
   margin: 16px;
 }
 

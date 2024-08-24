@@ -3,6 +3,8 @@ import { GridType, CellType } from '../types';
 const WHITE_COLOR_INT = 16777215;
 const BLACK_COLOR_HEX = '#000000';
 
+export const WIN_YELLOW_COLOR_HEX = '#faec6e';
+
 export const BOARD_SIZE = {
   min: 3,
   max: 8,

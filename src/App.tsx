@@ -16,8 +16,10 @@ function App() {
     onClickCell,
     onNavigateHistory,
     getBoardHeader,
-    winner,
+    winnerDetails,
   } = useGame();
+
+  const { winner, coords } = winnerDetails;
 
   return (
     <>
@@ -34,7 +36,7 @@ function App() {
               {boardSize && (
                 <div className='board-header'>
                   <div className='board-header__container'>
-                    <p>
+                    <p className='board-header__current-move'>
                       {historyKeys && historyKeys.length > 1
                         ? `Current move: ${getCurrentMove()}`
                         : null}
@@ -60,6 +62,7 @@ function App() {
 
             <Board
               grid={grid}
+              winnerCoords={coords}
               onClick={onClickCell}
               disabled={Boolean(winner)}
             />
