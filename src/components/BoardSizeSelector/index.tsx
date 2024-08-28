@@ -15,7 +15,7 @@ export default function BoardSizeSelector({
   );
 
   return (
-    <>
+    <div className='select__container'>
       <label htmlFor='board-size' className='select__label'>
         Choose size of the board:
       </label>
@@ -34,6 +34,6 @@ export default function BoardSizeSelector({
           </option>
         ))}
       </select>
-    </>
+    </div>
   );
 }

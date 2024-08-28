@@ -26,39 +26,40 @@ function App() {
       <Canvas />
       <div className='wrapper'>
         <div className='game__container'>
+          <div className='game-instructions'>
+            <h2 className='title'>Tic-Tac-Toe Game</h2>
+
+            <BoardSizeSelector
+              size={boardSize}
+              onSelectBoardSize={onSelectBoardSize}
+            />
+          </div>
           <div className='game-board'>
-            <h3 className='title'>Tic-Tac-Toe Game</h3>
-            <div className='select__container'>
-              <BoardSizeSelector
-                size={boardSize}
-                onSelectBoardSize={onSelectBoardSize}
-              />
-              {boardSize && (
-                <div className='board-header'>
-                  <div className='board-header__container'>
-                    <p className='board-header__current-move'>
-                      {historyKeys && historyKeys.length > 1
-                        ? `Current move: ${getCurrentMove()}`
-                        : null}
-                    </p>
-                    <button
-                      type='button'
-                      onClick={onResetGame}
-                      className='board-header__reset-button'
-                    >
-                      Reset
-                    </button>
-                  </div>
-                  <div
-                    style={{
-                      minHeight: '40px',
-                    }}
+            {boardSize && (
+              <div className='board-header'>
+                <div className='board-header__container'>
+                  <p className='board-header__current-move'>
+                    {historyKeys && historyKeys.length > 1
+                      ? `Current move: ${getCurrentMove()}`
+                      : null}
+                  </p>
+                  <button
+                    type='button'
+                    onClick={onResetGame}
+                    className='board-header__reset-button'
                   >
-                    <p>{getBoardHeader()}</p>
-                  </div>
+                    Reset
+                  </button>
                 </div>
-              )}
-            </div>
+                <div
+                  style={{
+                    minHeight: '40px',
+                  }}
+                >
+                  <p>{getBoardHeader()}</p>
+                </div>
+              </div>
+            )}
 
             <Board
               grid={grid}
