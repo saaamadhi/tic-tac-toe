@@ -85,7 +85,10 @@ export default memo(function Canvas() {
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current || undefined,
     });
+
+    renderer.setClearColor('#211d20');
     renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.render(scene, camera);
 
     const controls = new OrbitControls(camera, renderer?.domElement);
