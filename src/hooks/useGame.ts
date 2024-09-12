@@ -1,5 +1,5 @@
 import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { GridType, PLAYER, HistoryType, CellType } from '../types';
+import { GridType, PLAYER, HistoryType } from '../types';
 import {
   calculateWinner,
   generateGrid,
