@@ -15,11 +15,11 @@ export default memo(function Board({
   onClick: ({ rowId, cellId }: { rowId: number; cellId: number }) => void;
   disabled: boolean;
 }) {
+  const boardColor = useMemo(() => generateRandomColor(), []);
+
   if (!grid) {
     return null;
   }
-
-  const boardColor = useMemo(() => generateRandomColor(), []);
 
   return (
     <div

@@ -128,7 +128,7 @@ const useGame = ({
         });
       }
     },
-    [grid, player]
+    [grid, player, nullPositions, selectedHistoryStep]
   );
 
   const onNavigateHistory = (key: number) => {
@@ -168,64 +168,67 @@ const useGame = ({
     );
   }, [winner, player, selectedPlayer]);
 
-  const onComputerMove = (emptyCellIndexes: string[]) => {
-    let timeoutId: number;
-    const tempGrid = new Map(grid);
-    const cornerMoves = grid ? getCornerMoves(grid.size) : [];
+  const onComputerMove = useCallback(
+    (emptyCellIndexes: string[]) => {
+      let timeoutId: number;
+      const tempGrid = new Map(grid);
+      const cornerMoves = grid ? getCornerMoves(grid.size) : [];
 
-    for (const move of emptyCellIndexes) {
-      const [row, column] = move?.split(',').map(Number);
-      // 1. Try to make a winning move (if possible)
-      if (isComputerWinningMove(PLAYER.O, row, column, tempGrid)) {
+      for (const move of emptyCellIndexes) {
+        const [row, column] = move!.split(',').map(Number);
+        // 1. Try to make a winning move (if possible)
+        if (isComputerWinningMove(PLAYER.O, row, column, tempGrid)) {
+          timeoutId = setTimeout(() => {
+            onClickCell({ rowId: row, cellId: column });
+          }, 500);
+          return timeoutId;
+        }
+        // 2. Block the player's winning move (if possible)
+        if (isComputerWinningMove(PLAYER.X, row, column, tempGrid)) {
+          timeoutId = setTimeout(() => {
+            onClickCell({ rowId: row, cellId: column });
+          }, 500);
+          return timeoutId;
+        }
+      }
+
+      // 3. Prioritize the center
+      const gridSize = Math.sqrt(emptyCellIndexes.length + tempGrid.size); // Assuming a square grid
+      const center = Math.floor(gridSize / 2);
+      if (tempGrid.get(center)?.[center] === null) {
         timeoutId = setTimeout(() => {
-          onClickCell({ rowId: row, cellId: column });
+          onClickCell({ rowId: center, cellId: center });
         }, 500);
         return timeoutId;
       }
-      // 2. Block the player's winning move (if possible)
-      if (isComputerWinningMove(PLAYER.X, row, column, tempGrid)) {
+
+      // 4. Prioritize corners for strategic advantage (if gridSize > 3)
+      for (const move of cornerMoves) {
+        if (emptyCellIndexes.includes(move)) {
+          const [row, column] = move.split(',').map(Number);
+          timeoutId = setTimeout(() => {
+            onClickCell({ rowId: row, cellId: column });
+          }, 500);
+          return timeoutId;
+        }
+      }
+
+      // 5. Default to a random move if no strategic moves available
+      const randomMove = Math.floor(Math.random() * emptyCellIndexes.length);
+      const nextCell = emptyCellIndexes[randomMove]?.split(',').map(Number);
+      if (nextCell) {
         timeoutId = setTimeout(() => {
-          onClickCell({ rowId: row, cellId: column });
+          onClickCell({
+            rowId: nextCell[0],
+            cellId: nextCell[1],
+          });
         }, 500);
+
         return timeoutId;
       }
-    }
-
-    // 3. Prioritize the center
-    const gridSize = Math.sqrt(emptyCellIndexes.length + tempGrid.size); // Assuming a square grid
-    const center = Math.floor(gridSize / 2);
-    if (tempGrid.get(center)?.[center] === null) {
-      timeoutId = setTimeout(() => {
-        onClickCell({ rowId: center, cellId: center });
-      }, 500);
-      return timeoutId;
-    }
-
-    // 4. Prioritize corners for strategic advantage (if gridSize > 3)
-    for (const move of cornerMoves) {
-      if (emptyCellIndexes.includes(move)) {
-        const [row, column] = move.split(',').map(Number);
-        timeoutId = setTimeout(() => {
-          onClickCell({ rowId: row, cellId: column });
-        }, 500);
-        return timeoutId;
-      }
-    }
-
-    // 5. Default to a random move if no strategic moves available
-    const randomMove = Math.floor(Math.random() * emptyCellIndexes.length);
-    const nextCell = emptyCellIndexes[randomMove]?.split(',').map(Number);
-    if (nextCell) {
-      timeoutId = setTimeout(() => {
-        onClickCell({
-          rowId: nextCell[0],
-          cellId: nextCell[1],
-        });
-      }, 500);
-
-      return timeoutId;
-    }
-  };
+    },
+    [grid, onClickCell]
+  );
 
   useEffect(() => {
     let timeoutId: number | undefined;
@@ -245,7 +248,14 @@ const useGame = ({
         clearTimeout(timeoutId);
       }
     };
-  }, [selectedPlayer, player, winner, selectedHistoryStep]);
+  }, [
+    selectedPlayer,
+    player,
+    winner,
+    selectedHistoryStep,
+    nullPositions,
+    onComputerMove,
+  ]);
 
   return {
     boardSize,
