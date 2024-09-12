@@ -1,8 +1,18 @@
-import { ChangeEvent, useCallback, useState } from 'react';
-import { GridType, PLAYER, HistoryType } from '../types';
-import { generateGrid, generateGridCoords } from '../utils';
+import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { GridType, PLAYER, HistoryType, CellType } from '../types';
+import {
+  calculateWinner,
+  generateGrid,
+  generateGridCoords,
+  getCornerMoves,
+  isComputerWinningMove,
+} from '../utils';
 
-const useGame = () => {
+const useGame = ({
+  selectedPlayer,
+}: {
+  selectedPlayer: 'friend' | 'computer';
+}) => {
   const [boardSize, setBoardSize] = useState(() => {
     return localStorage.getItem('gridSize') || '';
   });
@@ -19,74 +29,13 @@ const useGame = () => {
   );
 
   const [player, setPlayer] = useState<PLAYER>(PLAYER.X);
+
   const [history, setHistory] = useState<HistoryType | undefined>(() => {
     return grid ? { 0: [new Map(grid), nullPositions] } : undefined;
   });
   const [selectedHistoryStep, setSelectedHistoryStep] = useState<
     number | undefined
   >();
-
-  const calculateWinner = useCallback(() => {
-    let coords: string[] = [];
-    const firstRow = grid?.get(0);
-    if (grid && firstRow) {
-      for (const [index, row] of grid) {
-        // Find winner in a row
-        if (
-          row[0] !== null &&
-          Object.values(row).every((cell) => cell === row[0])
-        ) {
-          coords = Object.values(row).map(
-            (_, cellIndex) => `${index},${cellIndex}`
-          );
-
-          return { winner: row[0], coords };
-        }
-        //Find winner in a column
-        if (
-          firstRow[index] !== null &&
-          [...grid.values()].every((row) => row[index] === firstRow[index])
-        ) {
-          coords = [...grid.values()].map(
-            (_, rowIndex) => `${rowIndex},${index}`
-          );
-
-          return { winner: firstRow[index], coords };
-        }
-      }
-
-      //Find winner in a main diagonal
-      if (
-        firstRow[0] !== null &&
-        [...grid.values()].every((row, index) => row[index] === firstRow[0])
-      ) {
-        coords = [...grid.values()].map(
-          (_, rowIndex) => `${rowIndex},${rowIndex}`
-        );
-        return { winner: firstRow[0], coords };
-      }
-      //Find winner in an anti-diagonal
-      if (
-        [...grid.values()].every(
-          (row, index) =>
-            firstRow[grid.size - 1] !== null &&
-            row[grid.size - (index + 1)] === firstRow[grid.size - 1]
-        )
-      ) {
-        coords = [...grid.values()].map(
-          (_, rowIndex) => `${rowIndex},${grid.size - (rowIndex + 1)}`
-        );
-        return { winner: firstRow[grid.size - 1], coords };
-      }
-    }
-
-    // Find if it's a draw
-    if (grid && !nullPositions?.size) {
-      return { winner: 'XO' };
-    }
-
-    return { winner: undefined };
-  }, [grid, nullPositions]);
 
   const onResetGame = () => {
     const formattedGridSize = Number(boardSize);
@@ -194,16 +143,15 @@ const useGame = () => {
     });
   };
 
-  const getBoardHeader = () => {
-    if (!winnerDetails.winner) {
+  const { winner, ...rest } = calculateWinner(grid, nullPositions);
+
+  const getBoardHeader = useCallback(() => {
+    if (!winner) {
       return `Next up: ${player}`;
     }
-    return winnerDetails.winner.length > 1
-      ? 'Draw!'
-      : `Winner: ${winnerDetails.winner}`;
-  };
+    return winner.length > 1 ? 'Draw!' : `Winner: ${winner}`;
+  }, [winner, player]);
 
-  const winnerDetails = calculateWinner();
   const historyKeys = history && Object.keys(history);
   const getCurrentMove = () => {
     if (historyKeys) {
@@ -213,6 +161,91 @@ const useGame = () => {
     }
     return null;
   };
+
+  const isCellDisabled = useMemo(() => {
+    return (
+      Boolean(winner) || (selectedPlayer === 'computer' && player === PLAYER.O)
+    );
+  }, [winner, player, selectedPlayer]);
+
+  const onComputerMove = (emptyCellIndexes: string[]) => {
+    let timeoutId: number;
+    const tempGrid = new Map(grid);
+    const cornerMoves = grid ? getCornerMoves(grid.size) : [];
+
+    for (const move of emptyCellIndexes) {
+      const [row, column] = move?.split(',').map(Number);
+      // 1. Try to make a winning move (if possible)
+      if (isComputerWinningMove(PLAYER.O, row, column, tempGrid)) {
+        timeoutId = setTimeout(() => {
+          onClickCell({ rowId: row, cellId: column });
+        }, 500);
+        return timeoutId;
+      }
+      // 2. Block the player's winning move (if possible)
+      if (isComputerWinningMove(PLAYER.X, row, column, tempGrid)) {
+        timeoutId = setTimeout(() => {
+          onClickCell({ rowId: row, cellId: column });
+        }, 500);
+        return timeoutId;
+      }
+    }
+
+    // 3. Prioritize the center
+    const gridSize = Math.sqrt(emptyCellIndexes.length + tempGrid.size); // Assuming a square grid
+    const center = Math.floor(gridSize / 2);
+    if (tempGrid.get(center)?.[center] === null) {
+      timeoutId = setTimeout(() => {
+        onClickCell({ rowId: center, cellId: center });
+      }, 500);
+      return timeoutId;
+    }
+
+    // 4. Prioritize corners for strategic advantage (if gridSize > 3)
+    for (const move of cornerMoves) {
+      if (emptyCellIndexes.includes(move)) {
+        const [row, column] = move.split(',').map(Number);
+        timeoutId = setTimeout(() => {
+          onClickCell({ rowId: row, cellId: column });
+        }, 500);
+        return timeoutId;
+      }
+    }
+
+    // 5. Default to a random move if no strategic moves available
+    const randomMove = Math.floor(Math.random() * emptyCellIndexes.length);
+    const nextCell = emptyCellIndexes[randomMove]?.split(',').map(Number);
+    if (nextCell) {
+      timeoutId = setTimeout(() => {
+        onClickCell({
+          rowId: nextCell[0],
+          cellId: nextCell[1],
+        });
+      }, 500);
+
+      return timeoutId;
+    }
+  };
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+    if (
+      !winner &&
+      selectedPlayer === 'computer' &&
+      player === PLAYER.O &&
+      nullPositions &&
+      !selectedHistoryStep
+    ) {
+      const nullPositionsValues = [...nullPositions.values()];
+      timeoutId = onComputerMove(nullPositionsValues);
+    }
+
+    return () => {
+      if (typeof timeoutId === 'number') {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [selectedPlayer, player, winner, selectedHistoryStep]);
 
   return {
     boardSize,
@@ -224,7 +257,8 @@ const useGame = () => {
     onClickCell,
     onNavigateHistory,
     getBoardHeader,
-    winnerDetails,
+    winnerDetails: { winner, ...rest },
+    isCellDisabled,
   };
 };
 

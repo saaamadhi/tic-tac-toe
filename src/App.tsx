@@ -4,8 +4,18 @@ import GameHistory from './components/GameHistory';
 import useGame from './hooks/useGame';
 import './App.css';
 import Canvas from './components/Canvas';
+import useModal from './hooks/useModal';
+import Modal from './components/Modal';
+import { useState } from 'react';
 
 function App() {
+  const [selectedPlayer, setSelectedPlayer] = useState<'friend' | 'computer'>(
+    'friend'
+  );
+
+  const { modalRef, gameWrapperRef, onModalClose } = useModal({
+    setSelectedPlayer,
+  });
   const {
     boardSize,
     getCurrentMove,
@@ -17,14 +27,18 @@ function App() {
     onNavigateHistory,
     getBoardHeader,
     winnerDetails,
-  } = useGame();
+    isCellDisabled,
+  } = useGame({ selectedPlayer });
 
-  const { winner, coords } = winnerDetails;
+  const { coords } = winnerDetails;
 
   return (
     <>
       <Canvas />
-      <div className='wrapper'>
+
+      <Modal ref={modalRef} onModalClose={onModalClose} />
+
+      <div className='wrapper' ref={gameWrapperRef}>
         <div className='game__container'>
           <div className='game-instructions'>
             <h2 className='title'>Tic-Tac-Toe Game</h2>
@@ -65,7 +79,7 @@ function App() {
               grid={grid}
               winnerCoords={coords}
               onClick={onClickCell}
-              disabled={Boolean(winner)}
+              disabled={isCellDisabled}
             />
           </div>
           <GameHistory

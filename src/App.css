@@ -5,6 +5,8 @@
 }
 
 .wrapper {
+  display: none;
+  justify-content: center;
   position: relative;
   color: #fff;
 }
@@ -13,6 +15,7 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   column-gap: 20px;
+  width: 100%;
 }
 
 .game-board {
@@ -28,6 +31,7 @@
 
 .board-header {
   width: 100%;
+  min-width: 365px;
 }
 
 .board-header__container {
