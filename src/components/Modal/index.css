@@ -1,11 +1,11 @@
 .modal[open] {
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #fff;
   border-radius: 10px;
   z-index: 10;
-  margin: 0 20px;
   outline: none;
   border: none;
   display: flex;
