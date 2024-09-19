@@ -1,9 +1,10 @@
+import { Analytics } from '@vercel/analytics/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
-  createBrowserRouter,
-  RouterProvider,
   Navigate,
+  RouterProvider,
+  createBrowserRouter,
 } from 'react-router-dom';
 import App from './App.tsx';
 
@@ -21,5 +22,6 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    <Analytics />
   </StrictMode>
 );
